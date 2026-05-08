@@ -155,6 +155,31 @@ export async function getCampaignById(id: string) {
   }
 }
 
+export async function getActiveCampaign() {
+  try {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("id, name, slug, description, theme, is_active, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      console.error("Error fetching active campaign:", error)
+      return { success: false as const, error: error.message }
+    }
+
+    return { success: true as const, data: (data as Campaign) || null }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    console.error("Error initializing Supabase client for getActiveCampaign:", message)
+    return { success: false as const, error: message }
+  }
+}
+
 export async function createCampaign(data: {
   name: string
   slug: string

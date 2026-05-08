@@ -27,8 +27,20 @@ export async function submitParticipation(
       return { success: false, error: "Veuillez remplir tous les champs" }
     }
 
+    let effectiveCampaignId = campaignId
+    if (!effectiveCampaignId) {
+      const { data: activeCampaign } = await supabase
+        .from("campaigns")
+        .select("id")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (activeCampaign?.id) effectiveCampaignId = activeCampaign.id as string
+    }
+
     // Check campaign availability if campaignId is present
-    if (campaignId) {
+    if (effectiveCampaignId) {
       let cityId = authCity?.id
       // If no auth city, try to resolve city ID from name to check limits
       if (!cityId && finalCity) {
@@ -36,7 +48,7 @@ export async function submitParticipation(
         if (cityRows && cityRows.length > 0) cityId = cityRows[0].id
       }
 
-      // const availability = await getAvailablePrizes(campaignId, cityId, finalCity)
+      // const availability = await getAvailablePrizes(effectiveCampaignId, cityId, finalCity)
       
       // if (availability.success && availability.data) {
       //   const hasAvailable = availability.data.some((g: any) => g.available)
@@ -57,8 +69,8 @@ export async function submitParticipation(
       won: false,
     }
 
-    if (campaignId) {
-      insertData.campaign_id = campaignId
+    if (effectiveCampaignId) {
+      insertData.campaign_id = effectiveCampaignId
     }
 
     const insertPayload = meta ? { ...insertData, ...meta } : insertData

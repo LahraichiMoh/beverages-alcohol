@@ -10,6 +10,8 @@ import { submitParticipation } from "@/app/actions/submit-participation"
 import type { Campaign } from "@/app/actions/campaigns"
 import Image from "next/image"
 
+const CAMPAIGN_CACHE_KEY = "spin_campaign_cache_v1"
+
 const GENERAL_CONDITIONS = `J'autorise la société et ses représentants, à reproduire et exploiter mon image en photo dans le cadre d'un reportage de remise de lots. Les photos seront utilisées à des fins de promotion et de communication sur les réseaux sociaux et/ou la presse nationale et pour des rapports internes de l'entreprise.
 
 Cette autorisation emporte la possibilité d'apporter au reportage fait de mon image toutes modifications, adaptations ou suppressions qu'il jugera utile. Le Photographe pourra notamment l'utiliser, la publier, la reproduire, l'adapter ou la modifier, seule ou en combinaison avec d'autres matériels.
@@ -56,6 +58,11 @@ export function ParticipationForm({ campaign, city: prefilledCity }: Participati
         return
       }
 
+      if (campaign) {
+        try {
+          window.sessionStorage.setItem(CAMPAIGN_CACHE_KEY, JSON.stringify(campaign))
+        } catch {}
+      }
       router.push(`/spin/${result.participantId}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Une erreur s'est produite"

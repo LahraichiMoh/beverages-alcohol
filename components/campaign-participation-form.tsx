@@ -21,6 +21,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
+const CAMPAIGN_CACHE_KEY = "spin_campaign_cache_v1"
+
 interface CampaignParticipationFormProps {
   campaignId: string
   campaignName: string
@@ -264,6 +266,20 @@ export function CampaignParticipationForm({ campaignId, campaignName, theme }: C
                     )
                     if (res.success && res.participantId) {
                       setConfirmOpen(false)
+                      try {
+                        window.sessionStorage.setItem(
+                          CAMPAIGN_CACHE_KEY,
+                          JSON.stringify({
+                            id: campaignId,
+                            name: campaignName,
+                            slug: "",
+                            description: "",
+                            theme,
+                            is_active: true,
+                            created_at: new Date().toISOString(),
+                          }),
+                        )
+                      } catch {}
                       router.push(`/spin/${res.participantId}`)
                       return
                     }
