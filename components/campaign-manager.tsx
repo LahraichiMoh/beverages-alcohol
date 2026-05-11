@@ -277,15 +277,19 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            {!teamAccess && <Button variant="outline" onClick={() => setEditingCampaign(null)} className="w-full sm:w-auto">← Retour</Button>}
+            {!teamAccess && (
+              <Button variant="admin-outline" onClick={() => setEditingCampaign(null)} className="w-full sm:w-auto">
+                ← Retour
+              </Button>
+            )}
             <h2 className="text-2xl font-bold leading-tight">{editingCampaign.name}</h2>
           </div>
           {!teamAccess && (
             <Button
-              variant="outline"
+              variant="admin-outline"
               onClick={handleResetAll}
               disabled={resettingAll}
-              className="border-amber-200 text-amber-800 hover:bg-amber-50 w-full sm:w-auto"
+              className="w-full sm:w-auto"
             >
               {resettingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Réinitialiser pour rejouer
@@ -428,7 +432,7 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                           />
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="admin-outline"
                             size="icon"
                             onClick={() => logoInputRef.current?.click()}
                             disabled={uploadingLogo}
@@ -452,7 +456,7 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                           />
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="admin-outline"
                             size="icon"
                             onClick={() => bgInputRef.current?.click()}
                             disabled={uploadingBg}
@@ -465,7 +469,9 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                   </div>
 
                   <div className="flex justify-end pt-4">
-                    <Button onClick={handleSave}>Enregistrer les modifications</Button>
+                    <Button onClick={handleSave} variant="admin" size="lg">
+                      Enregistrer les modifications
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -537,7 +543,9 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Mes Campagnes</h2>
-        <Button onClick={() => setShowCreateForm(true)}><Plus className="mr-2 h-4 w-4" /> Nouvelle Campagne</Button>
+        <Button onClick={() => setShowCreateForm(true)} variant="admin" size="lg">
+          <Plus className="mr-2 h-4 w-4" /> Nouvelle Campagne
+        </Button>
       </div>
 
       {showCreateForm && (
@@ -619,7 +627,7 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="admin-outline"
                       size="icon"
                       onClick={() => logoInputRef.current?.click()}
                       disabled={uploadingLogo}
@@ -646,7 +654,7 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                     />
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="admin-outline"
                       size="icon"
                       onClick={() => bgInputRef.current?.click()}
                       disabled={uploadingBg}
@@ -662,8 +670,12 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowCreateForm(false)}>Annuler</Button>
-              <Button onClick={handleSave} style={{ backgroundColor: formData.primaryColor, color: "white" }}>Créer</Button>
+              <Button variant="admin-outline" onClick={() => setShowCreateForm(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSave} variant="admin" style={{ backgroundColor: formData.primaryColor, color: "white" }}>
+                Créer
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -683,18 +695,18 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
                 <span>{campaign.name}</span>
                 <div className="flex gap-1">
                     <Button 
-                        variant="ghost" 
-                        size="icon" 
+                        variant="admin-ghost" 
+                        size="icon-sm" 
                         onClick={(e) => { 
                             e.stopPropagation(); 
                             window.open(`/c/${campaign.slug}`, '_blank');
                         }} 
                         title="Voir la campagne"
-                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                        className="text-slate-700"
                     >
                         <ExternalLink className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDelete(campaign.id) }} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Button variant="admin-ghost" size="icon-sm" onClick={(e) => { e.stopPropagation(); handleDelete(campaign.id) }} className="text-rose-600 hover:text-rose-700">
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -844,7 +856,7 @@ function CampaignVenueManager({ campaignId, logoUrl }: { campaignId: string; log
                 <option value="point de vente">Point de vente</option>
               </select>
             </div>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving} variant="admin">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Ajouter
             </Button>
@@ -861,7 +873,7 @@ function CampaignVenueManager({ campaignId, logoUrl }: { campaignId: string; log
                   <CardTitle className="text-base">{venue.name}</CardTitle>
                   <CardDescription>{venue.city?.name} • {venue.type}</CardDescription>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(venue.id)} className="text-red-500">
+                <Button variant="admin-ghost" size="icon-sm" onClick={() => handleDelete(venue.id)} className="text-rose-600 hover:text-rose-700">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

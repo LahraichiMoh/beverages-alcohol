@@ -335,7 +335,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                     </div>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="admin-outline"
                       className="mt-4 w-full"
                       disabled={exportingAll || totalParticipants === 0}
                       onClick={() => exportCsv({ winnersOnly: false })}
@@ -358,7 +358,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                     </div>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="admin-outline"
                       className="mt-4 w-full"
                       disabled={exportingWinners || totalWinners === 0}
                       onClick={() => exportCsv({ winnersOnly: true })}
@@ -430,7 +430,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant="admin-outline"
                       className={cn(
                         "w-full justify-start text-left font-normal bg-white border-slate-200 h-10",
                         !dateRange.from && "text-muted-foreground"
@@ -459,7 +459,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
 
               <div className="flex items-end gap-2 pt-5">
                 <Button 
-                  variant="outline" 
+                  variant="admin-outline" 
                   size="icon"
                   className="h-10 w-10 border-slate-200"
                   onClick={() => {
@@ -477,14 +477,14 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
 
             <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setSortDesc((v) => !v)}>
+                <Button variant="admin-outline" className="w-full sm:w-auto" onClick={() => setSortDesc((v) => !v)}>
                   <ArrowUpDown className="h-4 w-4" />
                   Date {sortDesc ? "desc" : "asc"}
                 </Button>
                 {!onlyWinners && (
                   <Button
                     type="button"
-                    variant={winnersOnly ? "default" : "outline"}
+                    variant={winnersOnly ? "admin" : "admin-outline"}
                     className="w-full sm:w-auto"
                     onClick={() => setWinnersOnly((v) => !v)}
                   >
@@ -674,7 +674,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
                   <Button
-                    variant="outline"
+                    variant="admin-outline"
                     className="w-full sm:w-auto"
                     disabled={pageIndex <= 0}
                     onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
@@ -682,7 +682,7 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                     Précédent
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="admin-outline"
                     className="w-full sm:w-auto"
                     disabled={pageIndex >= pageCount - 1}
                     onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}

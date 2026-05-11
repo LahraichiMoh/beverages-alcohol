@@ -226,10 +226,10 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
         <h3 className="text-lg font-medium">Cadeaux de la campagne{campaignName ? `: ${campaignName}` : ""}</h3>
         {!readOnly && (
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="w-full sm:w-auto" onClick={() => setShowAddForm(!showAddForm)}>
+            <Button className="w-full sm:w-auto" variant="admin" size="lg" onClick={() => setShowAddForm(!showAddForm)}>
               {showAddForm ? "Annuler" : <><Plus className="mr-2 h-4 w-4" /> Ajouter un cadeau</>}
             </Button>
-            <Button className="w-full sm:w-auto" variant="outline" onClick={handleResetAllGifts} disabled={resettingAll}>
+            <Button className="w-full sm:w-auto" variant="admin-outline" size="lg" onClick={handleResetAllGifts} disabled={resettingAll}>
               {resettingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
               Réinitialiser tous les cadeaux
             </Button>
@@ -278,7 +278,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
               <div className="col-span-2 space-y-2">
                 <Label>Image</Label>
                 <div className="flex gap-4 items-center">
-                  <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  <Button variant="admin-outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     {imageUrl ? "Changer l'image" : "Uploader une image"}
                   </Button>
@@ -294,8 +294,12 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowAddForm(false)}>Annuler</Button>
-              <Button onClick={handleCreateGift} disabled={!newName || uploading}>Créer</Button>
+              <Button variant="admin-outline" onClick={() => setShowAddForm(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleCreateGift} disabled={!newName || uploading} variant="admin">
+                Créer
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -348,7 +352,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
               <div className="col-span-2 space-y-2">
                 <Label>Image</Label>
                 <div className="flex gap-4 items-center">
-                  <Button variant="outline" onClick={() => editFileInputRef.current?.click()} disabled={uploading}>
+                  <Button variant="admin-outline" onClick={() => editFileInputRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     {editImageUrl ? "Changer l'image" : "Uploader une image"}
                   </Button>
@@ -366,8 +370,8 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
             
             <div className="flex justify-between items-center pt-4 border-t">
                <Button 
-                variant="outline" 
-                className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                variant="admin-outline" 
+                className="text-amber-700"
                 onClick={() => editingGift && handleResetGift(editingGift.id)}
                >
                  <RefreshCw className="mr-2 h-4 w-4" />
@@ -375,8 +379,12 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                </Button>
 
                <div className="flex gap-2">
-                 <Button variant="ghost" onClick={() => setEditingGift(null)}>Annuler</Button>
-                 <Button onClick={handleUpdateGift} disabled={!editName || uploading}>Enregistrer</Button>
+                 <Button variant="admin-outline" onClick={() => setEditingGift(null)}>
+                   Annuler
+                 </Button>
+                 <Button onClick={handleUpdateGift} disabled={!editName || uploading} variant="admin">
+                   Enregistrer
+                 </Button>
                </div>
             </div>
           </div>
@@ -449,7 +457,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1 text-xs min-w-[160px]">
+                      <Button variant="admin-outline" size="sm" className="flex-1 text-xs min-w-[160px]">
                         Stock établissement
                       </Button>
                     </DialogTrigger>
@@ -458,14 +466,14 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                     </DialogContent>
                   </Dialog>
                   
-                  <Button variant="outline" size="sm" className="w-8 px-0" onClick={() => openEditDialog(gift)}>
+                  <Button variant="admin-outline" size="sm" className="w-8 px-0" onClick={() => openEditDialog(gift)}>
                     <Edit className="h-4 w-4" />
                   </Button>
                   
                   <Button
-                    variant="ghost"
+                    variant="admin-ghost"
                     size="icon-sm"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-rose-600 hover:text-rose-700"
                     onClick={() => handleDeleteGift(gift.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -481,7 +489,9 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
           <div className="col-span-full text-center py-12 text-slate-400 bg-slate-50 rounded-lg border border-dashed">
             <GiftIcon className="mx-auto h-12 w-12 opacity-20 mb-2" />
             <p>Aucun cadeau pour cette campagne.</p>
-            <Button variant="link" onClick={() => setShowAddForm(true)}>Ajouter le premier cadeau</Button>
+            <Button variant="link" onClick={() => setShowAddForm(true)} className="rounded-xl">
+              Ajouter le premier cadeau
+            </Button>
           </div>
         )}
       </div>

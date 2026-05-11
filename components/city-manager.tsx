@@ -134,10 +134,7 @@ export function CityManager() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-800">Liste des villes</h2>
         {!isAdding && !editingId && (
-          <Button 
-            onClick={() => setIsAdding(true)} 
-            className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
-          >
+          <Button onClick={() => setIsAdding(true)} variant="admin" size="lg">
             <Plus className="h-4 w-4" /> Ajouter une ville
           </Button>
         )}
@@ -194,10 +191,10 @@ export function CityManager() {
               {error && <p className="text-red-500 text-sm">{error}</p>}
 
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button type="button" variant="admin-outline" onClick={resetForm}>
                   Annuler
                 </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                <Button type="submit" variant="admin">
                   <Save className="h-4 w-4 mr-2" />
                   {isAdding ? "Créer" : "Enregistrer"}
                 </Button>
@@ -215,18 +212,18 @@ export function CityManager() {
                 <CardTitle className="text-lg">{city.name}</CardTitle>
                 <div className="flex gap-1">
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="admin-ghost"
+                    size="icon-sm"
                     onClick={() => startEdit(city)}
-                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="text-slate-700"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="admin-ghost"
+                    size="icon-sm"
                     onClick={() => handleDelete(city.id)}
-                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-rose-600 hover:text-rose-700"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

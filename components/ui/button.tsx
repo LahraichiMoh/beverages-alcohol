@@ -19,6 +19,14 @@ const buttonVariants = cva(
         ghost:
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
+        admin:
+          'rounded-xl bg-slate-900 text-white shadow-sm hover:bg-slate-800',
+        'admin-outline':
+          'rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50',
+        'admin-ghost':
+          'rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900',
+        'admin-destructive':
+          'rounded-xl bg-rose-600 text-white shadow-sm hover:bg-rose-700 focus-visible:ring-rose-600/20',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

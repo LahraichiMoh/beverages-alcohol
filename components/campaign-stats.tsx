@@ -155,7 +155,7 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
+                variant="admin-outline"
                 className={cn(
                   "w-[260px] justify-start text-left font-normal bg-slate-50/50 border-slate-200 hover:bg-slate-100",
                   !range.from && "text-muted-foreground"
@@ -190,7 +190,7 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
           </Popover>
 
           {(range.from || range.to) && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-400 hover:text-red-600 h-9">
+            <Button variant="admin-ghost" size="icon-sm" onClick={clearFilters} className="h-9 w-9 text-slate-500 hover:text-rose-700">
               <X className="h-4 w-4" />
             </Button>
           )}

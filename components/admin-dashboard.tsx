@@ -51,7 +51,7 @@ export function AdminDashboard({ userId, teamAccess }: AdminDashboardProps) {
               <div className="text-sm text-slate-600 truncate">Administration des campagnes</div>
             </div>
           </div>
-          <Button onClick={handleSignOut} className="bg-slate-900 text-white hover:bg-slate-800">
+          <Button onClick={handleSignOut} variant="admin" size="lg">
             <LogOut className="mr-2 h-4 w-4" />
             Se déconnecter
           </Button>

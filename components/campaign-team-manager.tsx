@@ -101,7 +101,7 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
           </h3>
           <p className="text-sm text-slate-500">Gérez les accès pour {campaignName}</p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
+        <Button onClick={() => setShowAddForm(!showAddForm)} variant="admin" size="lg">
           {showAddForm ? "Annuler" : <><UserPlus className="mr-2 h-4 w-4" /> Ajouter un accès</>}
         </Button>
       </div>
@@ -179,7 +179,7 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
               </div>
 
               <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white font-bold">
+                <Button type="submit" disabled={saving} variant="admin" size="lg">
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Créer l'accès
                 </Button>
@@ -228,9 +228,9 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
               </div>
 
               <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                variant="admin-ghost" 
+                size="icon-sm" 
+                className="text-rose-600 hover:text-rose-700"
                 onClick={() => handleDeleteMember(member.id)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -243,7 +243,9 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
           <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
             <Shield className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500 font-medium">Aucun membre d'équipe configuré</p>
-            <Button variant="link" onClick={() => setShowAddForm(true)} className="text-orange-600">Ajouter le premier accès</Button>
+            <Button variant="link" onClick={() => setShowAddForm(true)} className="rounded-xl text-slate-900">
+              Ajouter le premier accès
+            </Button>
           </div>
         )}
       </div>
