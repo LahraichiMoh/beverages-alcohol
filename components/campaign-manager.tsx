@@ -363,106 +363,155 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
           
           {!teamAccess && (
             <TabsContent value="settings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Paramètres de la campagne</CardTitle>
+              <Card className="border-0 ring-1 ring-slate-200/80 shadow-sm overflow-hidden">
+                <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white">
+                  <CardTitle className="text-lg">Paramètres de la campagne</CardTitle>
                   <CardDescription>Modifiez les informations de base et l&apos;apparence.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Nom</Label>
-                      <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Ex: Été 2024" />
+                <CardContent className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">Nom</Label>
+                      <Input
+                        value={formData.name}
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                        placeholder="Ex: Été 2024"
+                        className="bg-white"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Slug</Label>
-                      <Input value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} placeholder="ete-2024" />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">Slug</Label>
+                      <Input
+                        value={formData.slug}
+                        onChange={e => setFormData({...formData, slug: e.target.value})}
+                        placeholder="ete-2024"
+                        className="bg-white"
+                      />
                     </div>
-                    <div className="col-span-2 space-y-2">
-                      <Label>Description</Label>
-                      <Textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Description de la campagne" />
+                    <div className="md:col-span-2 space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">Description</Label>
+                      <Textarea
+                        value={formData.description}
+                        onChange={e => setFormData({...formData, description: e.target.value})}
+                        placeholder="Description de la campagne"
+                        className="bg-white"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Utilisateur (Campagne)</Label>
-                      <Input value={formData.accessUsername} onChange={e => setFormData({...formData, accessUsername: e.target.value})} placeholder="ex: campagne1" />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">Utilisateur (Campagne)</Label>
+                      <Input
+                        value={formData.accessUsername}
+                        onChange={e => setFormData({...formData, accessUsername: e.target.value})}
+                        placeholder="ex: campagne1"
+                        className="bg-white"
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Mot de passe (Campagne)</Label>
-                      <Input type="password" value={formData.accessPassword} onChange={e => setFormData({...formData, accessPassword: e.target.value})} placeholder="Laisser vide pour ne pas changer" />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">Mot de passe (Campagne)</Label>
+                      <Input
+                        type="password"
+                        value={formData.accessPassword}
+                        onChange={e => setFormData({...formData, accessPassword: e.target.value})}
+                        placeholder="Laisser vide pour ne pas changer"
+                        className="bg-white"
+                      />
                     </div>
-                    <div className="col-span-2 flex items-center gap-2 pt-2">
+                    <div className="md:col-span-2 flex items-center gap-3 pt-1">
                       <Checkbox
                         id="campaign-active"
                         checked={formData.isActive}
                         onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked === true })}
                       />
-                      <Label htmlFor="campaign-active">Campagne active (visible sur la page d&apos;accueil)</Label>
+                      <Label htmlFor="campaign-active" className="text-sm text-slate-700">
+                        Campagne active (visible sur la page d&apos;accueil)
+                      </Label>
                     </div>
                   </div>
 
-                  <div className="space-y-4 border-t pt-4">
-                    <h3 className="font-medium flex items-center"><Palette className="mr-2 h-4 w-4" /> Apparence</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Couleur principale</Label>
-                        <div className="flex gap-2">
-                          <Input type="color" className="w-12 p-1" value={formData.primaryColor} onChange={e => setFormData({...formData, primaryColor: e.target.value})} />
-                          <Input value={formData.primaryColor} onChange={e => setFormData({...formData, primaryColor: e.target.value})} />
+                  <div className="space-y-4 border-t pt-6">
+                    <h3 className="text-sm font-semibold text-slate-800 flex items-center">
+                      <Palette className="mr-2 h-4 w-4 text-slate-500" /> Apparence
+                    </h3>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-600">Couleur principale</Label>
+                          <div className="flex gap-2">
+                            <Input type="color" className="w-12 p-1 bg-white" value={formData.primaryColor} onChange={e => setFormData({...formData, primaryColor: e.target.value})} />
+                            <Input value={formData.primaryColor} onChange={e => setFormData({...formData, primaryColor: e.target.value})} className="bg-white" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Couleur secondaire</Label>
-                        <div className="flex gap-2">
-                          <Input type="color" className="w-12 p-1" value={formData.secondaryColor} onChange={e => setFormData({...formData, secondaryColor: e.target.value})} />
-                          <Input value={formData.secondaryColor} onChange={e => setFormData({...formData, secondaryColor: e.target.value})} />
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-600">Couleur secondaire</Label>
+                          <div className="flex gap-2">
+                            <Input type="color" className="w-12 p-1 bg-white" value={formData.secondaryColor} onChange={e => setFormData({...formData, secondaryColor: e.target.value})} />
+                            <Input value={formData.secondaryColor} onChange={e => setFormData({...formData, secondaryColor: e.target.value})} className="bg-white" />
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>URL du Logo</Label>
-                        <div className="flex gap-2">
-                          <Input value={formData.logoUrl} onChange={e => setFormData({...formData, logoUrl: e.target.value})} placeholder="/logo.png" />
-                          <input
-                            type="file"
-                            ref={logoInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) handleUpload(e.target.files[0], 'logo')
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="admin-outline"
-                            size="icon"
-                            onClick={() => logoInputRef.current?.click()}
-                            disabled={uploadingLogo}
-                          >
-                            {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                          </Button>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-600">URL du Logo</Label>
+                          <div className="flex gap-2 items-center">
+                            <Input value={formData.logoUrl} onChange={e => setFormData({...formData, logoUrl: e.target.value})} placeholder="/logo.png" className="bg-white" />
+                            <input
+                              type="file"
+                              ref={logoInputRef}
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) handleUpload(e.target.files[0], 'logo')
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="admin-outline"
+                              size="icon"
+                              onClick={() => logoInputRef.current?.click()}
+                              disabled={uploadingLogo}
+                              className="shrink-0"
+                            >
+                              {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          {formData.logoUrl ? (
+                            <div className="mt-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2">
+                              <img src={formData.logoUrl} alt="Logo" className="h-10 w-10 object-contain rounded-lg bg-slate-50" />
+                              <div className="text-xs text-slate-500 truncate">{formData.logoUrl}</div>
+                            </div>
+                          ) : null}
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>URL de l&apos;arrière-plan</Label>
-                        <div className="flex gap-2">
-                          <Input value={formData.backgroundUrl} onChange={e => setFormData({...formData, backgroundUrl: e.target.value})} placeholder="/bg.jpg" />
-                          <input
-                            type="file"
-                            ref={bgInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) handleUpload(e.target.files[0], 'bg')
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="admin-outline"
-                            size="icon"
-                            onClick={() => bgInputRef.current?.click()}
-                            disabled={uploadingBg}
-                          >
-                            {uploadingBg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                          </Button>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-slate-600">URL de l&apos;arrière-plan</Label>
+                          <div className="flex gap-2 items-center">
+                            <Input value={formData.backgroundUrl} onChange={e => setFormData({...formData, backgroundUrl: e.target.value})} placeholder="/bg.jpg" className="bg-white" />
+                            <input
+                              type="file"
+                              ref={bgInputRef}
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) handleUpload(e.target.files[0], 'bg')
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="admin-outline"
+                              size="icon"
+                              onClick={() => bgInputRef.current?.click()}
+                              disabled={uploadingBg}
+                              className="shrink-0"
+                            >
+                              {uploadingBg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                          {formData.backgroundUrl ? (
+                            <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                              <div
+                                className="h-16 w-full bg-cover bg-center"
+                                style={{ backgroundImage: `url(${formData.backgroundUrl})` }}
+                              />
+                              <div className="px-3 py-2 text-xs text-slate-500 truncate">{formData.backgroundUrl}</div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
