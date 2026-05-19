@@ -8,7 +8,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Orange Money - Spin and Win",
+  title: "Beverages - Spin and Win",
   description: "Spin the wheel to win amazing prizes!",
   generator: "v0.app",
   icons: {
