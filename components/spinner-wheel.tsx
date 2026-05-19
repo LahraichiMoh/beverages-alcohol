@@ -326,7 +326,10 @@ export function SpinnerWheel({
                   >
                     {prizes.map((prize, index) => {
                       const startDeg = index * segmentAngle
-                      const labelOffset = Math.round(wheelSize * 0.35)
+                      const baseImageSize = wheelSize * 0.22
+                      const angleFactor = Math.max(0.55, Math.min(1, segmentAngle / 60))
+                      const imageSize = Math.round(Math.max(56, Math.min(120, baseImageSize * angleFactor)))
+                      const labelOffset = Math.round(wheelSize * 0.33 + imageSize * 0.12)
                       const isLightBg =
                         theme === "gold" &&
                         (prize.color || fallbackColors[index % fallbackColors.length]) === "#fff1a8"
@@ -352,7 +355,8 @@ export function SpinnerWheel({
                               <img
                                 src={prize.imageUrl}
                                 alt={prize.name}
-                                className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-md"
+                                className="object-contain drop-shadow-md"
+                                style={{ width: imageSize, height: imageSize }}
                               />
                             ) : (
                               <span
