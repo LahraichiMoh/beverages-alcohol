@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 
 interface Prize {
@@ -51,6 +52,11 @@ export function SpinnerWheel({
   const [wheelSize, setWheelSize] = useState<number>(384)
   const [showWinnerModal, setShowWinnerModal] = useState(false)
   const [showErrorModal, setShowErrorModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const audioCtxRef = useRef<AudioContext | null>(null)
   const tickTimersRef = useRef<number[]>([])
@@ -384,9 +390,13 @@ export function SpinnerWheel({
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
         </Button>
 
-        {showWinnerModal && resultPrize && (
+        {mounted && showWinnerModal && resultPrize
+          ? createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowWinnerModal(false)} />
+            <div
+              className="fixed inset-0 w-[100dvw] h-[100dvh] bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowWinnerModal(false)}
+            />
             <div 
               className={`relative w-[92vw] max-w-md mx-auto rounded-2xl border-2 shadow-2xl p-8 text-center overflow-hidden ${
                 theme === "gold" ? "border-yellow-500 bg-gradient-to-b from-yellow-50 to-amber-100" : "border-blue-900 bg-gradient-to-b from-blue-50 to-white"
@@ -427,11 +437,16 @@ export function SpinnerWheel({
               </div>
             </div>
           </div>
-        )}
+          , document.body)
+          : null}
 
-        {showErrorModal && spinError && (
+        {mounted && showErrorModal && spinError
+          ? createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowErrorModal(false)} />
+            <div
+              className="fixed inset-0 w-[100dvw] h-[100dvh] bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowErrorModal(false)}
+            />
             <div 
               className="relative w-[92vw] max-w-md mx-auto rounded-2xl border-2 border-red-500 shadow-2xl bg-gradient-to-b from-red-50 to-white p-8 text-center overflow-hidden"
             >
@@ -464,7 +479,8 @@ export function SpinnerWheel({
               </div>
             </div>
           </div>
-        )}
+          , document.body)
+          : null}
         
         {/* <h3 className="text-md font-bold text-lg pt-8 text-white">Animateur: {participantName}</h3> */}
       </div>

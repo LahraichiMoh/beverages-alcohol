@@ -557,14 +557,12 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
             {/* Desktop View */}
             <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200 bg-white">
               <div className="max-h-[65vh] overflow-auto">
-                <table className="min-w-[1020px] w-full text-sm">
+                <table className="min-w-[820px] w-full text-sm">
                   <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur border-b border-gray-200">
                     <tr className="text-xs font-semibold text-slate-600">
                       <th className="px-4 py-3 text-left">Nom (Animateur)</th>
-                      <th className="px-4 py-3 text-left">Participant</th>
                       <th className="px-4 py-3 text-left">Poste</th>
                       <th className="px-4 py-3 text-left">Ville</th>
-                      <th className="px-4 py-3 text-left">Détails</th>
                       <th className="px-4 py-3 text-left">Résultat</th>
                       <th className="px-4 py-3 text-right">Date</th>
                     </tr>
@@ -572,44 +570,22 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
                   <tbody className="divide-y divide-gray-100">
                     {displayedParticipants.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
+                        <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
                           Aucun participant trouvé
                         </td>
                       </tr>
                     ) : (
                       displayedParticipants.map((row) => {
                         const prize = row.prize_id ? prizeMap[row.prize_id] : null
-                        const details = row.participant_details?.[0]
                         return (
                           <tr key={row.id} className="hover:bg-slate-50">
                             <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              {details ? (
-                                <div className="flex flex-col">
-                                  <span className="font-semibold text-slate-900">{details.full_name}</span>
-                                  <span className="text-xs text-slate-600 font-mono">{details.phone}</span>
-                                  <span className="text-[10px] text-slate-500">{details.gender}, {details.age_range}</span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400">Pas de détails</span>
-                              )}
-                            </td>
                             <td className="px-4 py-3 font-mono text-xs text-slate-600 whitespace-nowrap">{row.code}</td>
                             <td className="px-4 py-3">
                               {row.city ? (
                                 <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
                                   {row.city}
                                 </span>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3">
-                              {details ? (
-                                <div className="flex flex-col max-w-[200px]">
-                                  <span className="text-xs font-medium truncate" title={details.usual_product}>{details.usual_product}</span>
-                                  <span className="text-[10px] text-slate-400 truncate" title={details.address}>{details.address}</span>
-                                </div>
                               ) : (
                                 <span className="text-slate-400">-</span>
                               )}

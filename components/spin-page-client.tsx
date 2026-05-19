@@ -446,8 +446,12 @@ export default function SpinPageClient({
 
             {hasSpun && (
               <Button
-                className="mt-12 w-full max-w-xs shadow-xl border-2 border-white/30 text-lg font-bold py-8 transition-all hover:scale-105 active:scale-95"
-                style={campaign?.theme?.primaryColor ? { backgroundColor: campaign.theme.primaryColor, color: "white" } : { background: "linear-gradient(to right, #f97316, #ed8936)" }}
+                className="mt-8 w-auto min-w-44 rounded-2xl px-8 py-3 text-base font-semibold shadow-2xl transition-transform hover:scale-[1.02] active:scale-[0.99] ring-1 ring-white/15 backdrop-blur"
+                style={
+                  campaign?.theme?.primaryColor
+                    ? { backgroundColor: campaign.theme.primaryColor, color: "white" }
+                    : { background: "linear-gradient(135deg, #0f172a, #111827)", color: "white" }
+                }
                 onClick={handleReplay}
                 disabled={creatingReplay}
               >
