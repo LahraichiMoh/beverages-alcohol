@@ -33,6 +33,44 @@ interface SpinnerWheelProps {
   }
 }
 
+function clamp01(n: number) {
+  return Math.max(0, Math.min(1, n))
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const raw = hex.trim().replace("#", "")
+  if (raw.length === 3) {
+    const r = parseInt(raw[0] + raw[0], 16)
+    const g = parseInt(raw[1] + raw[1], 16)
+    const b = parseInt(raw[2] + raw[2], 16)
+    if ([r, g, b].some(Number.isNaN)) return null
+    return { r, g, b }
+  }
+  if (raw.length !== 6) return null
+  const r = parseInt(raw.slice(0, 2), 16)
+  const g = parseInt(raw.slice(2, 4), 16)
+  const b = parseInt(raw.slice(4, 6), 16)
+  if ([r, g, b].some(Number.isNaN)) return null
+  return { r, g, b }
+}
+
+function mixHex(a: string, b: string, t: number) {
+  const ar = hexToRgb(a)
+  const br = hexToRgb(b)
+  const tt = clamp01(t)
+  if (!ar || !br) return b
+  const r = Math.round(ar.r + (br.r - ar.r) * tt)
+  const g = Math.round(ar.g + (br.g - ar.g) * tt)
+  const bb = Math.round(ar.b + (br.b - ar.b) * tt)
+  return `rgb(${r} ${g} ${bb})`
+}
+
+function rgbaFromHex(hex: string, a: number) {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return `rgba(56, 189, 248, ${clamp01(a)})`
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clamp01(a)})`
+}
+
 export function SpinnerWheel({
   participantName,
   prizes,
@@ -159,15 +197,22 @@ export function SpinnerWheel({
     return () => window.removeEventListener("resize", calcSize)
   }, [])
 
-  const borderColor = "border-white"
+  const accentColor = customColors?.secondary || customColors?.primary || (theme === "gold" ? "#F4CC00" : "#38bdf8")
+  const primaryColor = customColors?.primary || accentColor
+
   const fallbackColors =
     theme === "gold"
       ? ["#A97100", "#B88400", "#C79600", "#D6A800", "#E5BA00", "#F4CC00", "#D0A000", "#BF8E00"]
-      : ["#e31d2b", "#fff1a8"]
-  const resultAccent =
-    theme === "gold"
-      ? "from-yellow-50 to-yellow-100 border-yellow-500 text-amber-700"
-      : "from-blue-50 to-blue-100 border-blue-800 text-blue-900"
+      : [
+          mixHex("#0b1220", primaryColor, 0.62),
+          mixHex("#0b1220", accentColor, 0.62),
+          mixHex("#0b1220", primaryColor, 0.78),
+          mixHex("#0b1220", accentColor, 0.78),
+          mixHex("#0b1220", primaryColor, 0.68),
+          mixHex("#0b1220", accentColor, 0.68),
+          mixHex("#0b1220", primaryColor, 0.84),
+          mixHex("#0b1220", accentColor, 0.84),
+        ]
   const buttonClasses =
     theme === "gold"
       ? "bg-amber-500 hover:bg-amber-600 text-white"
@@ -228,38 +273,63 @@ export function SpinnerWheel({
               
               return (
                 <div className="relative">
-                  {/* Clean Outer Ring */}
-                  <div 
-                    className="absolute -inset-6 rounded-full border-[8px] border-[#daa520] shadow-2xl bg-[#e31d2b] flex items-center justify-center"
-                    style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}
-                  >
-                    {/* Bulbs - Simplified for clarity */}
-                    {[...Array(12)].map((_, i) => (
-                      <div 
-                        key={i}
-                        className="absolute w-2.5 h-2.5 rounded-full bg-[#fff1a8] border border-amber-600 animate-pulse shadow-[0_0_8px_#ffd700]"
+                  {theme !== "gold" ? (
+                    <>
+                      <div
+                        className="absolute -inset-4 rounded-full"
                         style={{
-                          transform: `rotate(${i * 30}deg) translateY(-${wheelSize / 2 + 15}px)`
+                          background: `conic-gradient(from 0deg, rgb(248 250 252), rgb(203 213 225), ${mixHex(
+                            "#cbd5e1",
+                            accentColor,
+                            0.35
+                          )}, rgb(148 163 184), rgb(15 23 42), rgb(148 163 184), ${mixHex(
+                            "#cbd5e1",
+                            accentColor,
+                            0.35
+                          )}, rgb(203 213 225), rgb(248 250 252))`,
+                          boxShadow: "0 18px 60px rgba(0,0,0,0.55)",
                         }}
                       />
-                    ))}
-                  </div>
+                      <div
+                        className="absolute -inset-3 rounded-full"
+                        style={{
+                          boxShadow: `0 0 0 6px rgba(148,163,184,0.6), 0 0 45px ${rgbaFromHex(
+                            accentColor,
+                            0.45
+                          )}, 0 0 120px ${rgbaFromHex(accentColor, 0.2)}`,
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <div
+                      className="absolute -inset-4 rounded-full"
+                      style={{
+                        background:
+                          "conic-gradient(from 0deg, #fff7cc, #f4cc00, #d6a800, #bf8e00, #fff7cc)",
+                        boxShadow: "0 18px 60px rgba(0,0,0,0.55)",
+                      }}
+                    />
+                  )}
 
                   {/* The Wheel */}
                   <div
-                    className={`relative rounded-full border-4 border-[#daa520] overflow-hidden transform transition-transform duration-[4000ms] ease-[cubic-bezier(0.1, 0, 0.1, 1)]`}
+                    className={`relative rounded-full overflow-hidden transform transition-transform duration-[4000ms] ease-[cubic-bezier(0.1, 0, 0.1, 1)]`}
                     style={{
                       transform: `rotate(${rotation}deg)`,
                       backgroundImage: gradient,
                       width: wheelSize,
                       height: wheelSize,
-                      boxShadow: "inset 0 0 40px rgba(0,0,0,0.2)",
+                      boxShadow:
+                        theme === "gold" ? "inset 0 0 60px rgba(0,0,0,0.3)" : "inset 0 0 90px rgba(0,0,0,0.55)",
+                      outline: theme === "gold" ? "4px solid rgba(218, 165, 32, 0.75)" : "1px solid rgba(255,255,255,0.12)",
                     }}
                   >
                     {prizes.map((prize, index) => {
                       const startDeg = index * segmentAngle
                       const labelOffset = Math.round(wheelSize * 0.35)
-                      const isLightBg = (prize.color || fallbackColors[index % fallbackColors.length]) === "#fff1a8"
+                      const isLightBg =
+                        theme === "gold" &&
+                        (prize.color || fallbackColors[index % fallbackColors.length]) === "#fff1a8"
                       
                       return (
                         <div
@@ -383,7 +453,7 @@ export function SpinnerWheel({
             </div>
           ) : (
             <div className="relative z-10 flex flex-col items-center">
-              <span className="text-3xl font-black tracking-tight drop-shadow-md uppercase">TOURNEZ</span>
+              <span className="text-2xl font-black tracking-tight drop-shadow-md uppercase">TOURNEZ</span>
               <span className="text-[12px] font-bold uppercase tracking-widest opacity-90">pour la Gloire</span>
             </div>
           )}

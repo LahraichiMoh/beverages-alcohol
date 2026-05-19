@@ -207,18 +207,12 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
         if (rows.length < chunkSize) break
       }
 
-      const columns = [
-        "name",
-        "code",
-        "city",
-        "full_name",
-        "phone",
-        "gender",
-        "age_range",
-        "address",
-        "usual_product",
-        "prize_name",
-        "created_at",
+      const columns: Array<{ key: string; header: string }> = [
+        { key: "name", header: "Animateur" },
+        { key: "code", header: "Poste" },
+        { key: "city", header: "Ville" },
+        { key: "result", header: "Résultat" },
+        { key: "created_at", header: "Date" },
       ]
 
       const escapeCsv = (value: unknown) => {
@@ -230,22 +224,20 @@ export function ParticipantList({ campaignId, onlyWinners, isTeamAccess, logoUrl
       }
 
       const lines: string[] = []
-      lines.push(columns.join(","))
+      lines.push(columns.map((c) => c.header).join(","))
       for (const r of allRows) {
         const prizeId = (r as any).prize_id as string | null | undefined
         const prizeName = prizeId && prizeMap[prizeId] ? prizeMap[prizeId].name : ""
-        const details = (r as any).participant_details?.[0] || {}
+        const won = Boolean((r as any).won)
+        const createdAt = (r as any).created_at as string | undefined
+        const result = won ? (prizeName ? prizeName : "Gagné") : "Perdu"
         const rowObj = { 
           ...(r as any), 
           prize_name: prizeName,
-          full_name: details.full_name || "",
-          phone: details.phone || "",
-          gender: details.gender || "",
-          age_range: details.age_range || "",
-          address: details.address || "",
-          usual_product: details.usual_product || "",
+          result,
+          created_at: createdAt ? new Date(createdAt).toLocaleString("fr-FR") : "",
         }
-        lines.push(columns.map((c) => escapeCsv((rowObj as any)[c])).join(","))
+        lines.push(columns.map((c) => escapeCsv((rowObj as any)[c.key])).join(","))
       }
 
       const csv = lines.join("\n")
