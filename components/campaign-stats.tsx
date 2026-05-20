@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { getCampaignStatsRows } from "@/app/actions/admin-campaign"
+import { getCampaignGiftWins, getCampaignStatsRows } from "@/app/actions/admin-campaign"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Loader2, Users, MapPin, CalendarDays, PieChart as PieChartIcon, Filter, X, ArrowRight, Calendar as CalendarIcon } from "lucide-react"
+import { Loader2, Users, MapPin, CalendarDays, Gift as GiftIcon, UserCheck, X, Calendar as CalendarIcon } from "lucide-react"
 import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns"
 import { fr } from "date-fns/locale"
 import {
@@ -18,8 +18,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
   Cell,
   Legend
 } from "recharts"
@@ -36,6 +34,7 @@ interface CampaignStatsProps {
 export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any[]>([])
+  const [giftWins, setGiftWins] = useState<any[]>([])
   
   // Date filter state
   const [range, setRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -58,9 +57,16 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
         rangePayload.to = toDate.toISOString()
       }
 
-      const res = await getCampaignStatsRows({ campaignId, range: rangePayload })
-      if (res.success) setData(res.data.rows || [])
-      else console.error("Error fetching stats:", res.error)
+      const [statsRes, giftRes] = await Promise.all([
+        getCampaignStatsRows({ campaignId, range: rangePayload }),
+        getCampaignGiftWins({ campaignId, range: rangePayload }),
+      ])
+
+      if (statsRes.success) setData(statsRes.data.rows || [])
+      else console.error("Error fetching stats:", statsRes.error)
+
+      if (giftRes.success) setGiftWins(giftRes.data.rows || [])
+      else console.error("Error fetching gift wins:", giftRes.error)
       setLoading(false)
     }
 
@@ -70,9 +76,8 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
   // Process data for charts
   const stats = useMemo(() => {
     const dailyMap: Record<string, { dateObj: Date; count: number }> = {}
-    const cityGenderMap: Record<string, { Masculin: number; Féminin: number }> = {}
-    const genderMap: Record<string, number> = { "Masculin": 0, "Féminin": 0 }
-    const ageGenderMap: Record<string, { Masculin: number; Féminin: number }> = {}
+    const cityCountMap: Record<string, number> = {}
+    const animatorCountMap: Record<string, number> = {}
 
     data.forEach((p) => {
       // Daily stats
@@ -85,25 +90,11 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
       }
       dailyMap[dateKey].count++
 
-      // Gender stats
-      const gender = p.participant_details?.[0]?.gender as "Masculin" | "Féminin" | undefined
-      if (gender === "Masculin" || gender === "Féminin") {
-        genderMap[gender]++
-      }
-
-      // City stats (split by gender)
       const city = p.city || "Inconnu"
-      if (!cityGenderMap[city]) cityGenderMap[city] = { Masculin: 0, Féminin: 0 }
-      if (gender === "Masculin") cityGenderMap[city].Masculin++
-      if (gender === "Féminin") cityGenderMap[city].Féminin++
+      cityCountMap[city] = (cityCountMap[city] || 0) + 1
 
-      // Age stats (split by gender)
-      const ageRange = p.participant_details?.[0]?.age_range
-      if (ageRange && (gender === "Masculin" || gender === "Féminin")) {
-        if (!ageGenderMap[ageRange]) ageGenderMap[ageRange] = { Masculin: 0, Féminin: 0 }
-        if (gender === "Masculin") ageGenderMap[ageRange].Masculin++
-        if (gender === "Féminin") ageGenderMap[ageRange].Féminin++
-      }
+      const animator = p.name || "Inconnu"
+      animatorCountMap[animator] = (animatorCountMap[animator] || 0) + 1
     })
 
     const sortedDailyData = Object.entries(dailyMap)
@@ -113,30 +104,29 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
         total: count
       }))
     
-    const cityData = Object.entries(cityGenderMap)
-      .map(([name, v]) => ({ name, Masculin: v.Masculin, Féminin: v.Féminin, total: v.Masculin + v.Féminin }))
-      .sort((a, b) => b.total - a.total)
-    const genderData = Object.entries(genderMap).filter(([_, total]) => total > 0).map(([name, value]) => ({ name, value }))
+    const cityData = Object.entries(cityCountMap)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
 
-    const ageOrder = ["18-25", "26-35", "36-45", "46-55", "55+"]
-    const ageData = Object.entries(ageGenderMap)
-      .sort(([a], [b]) => {
-        const ia = ageOrder.indexOf(a)
-        const ib = ageOrder.indexOf(b)
-        if (ia === -1 && ib === -1) return a.localeCompare(b)
-        if (ia === -1) return 1
-        if (ib === -1) return -1
-        return ia - ib
-      })
-      .map(([name, v]) => ({ name, Masculin: v.Masculin, Féminin: v.Féminin }))
+    const animatorData = Object.entries(animatorCountMap)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
+      .slice(0, 10)
 
-    return { dailyData: sortedDailyData, cityData, genderData, ageData }
-  }, [data])
+    const giftWinsData = (giftWins || [])
+      .filter((g) => (g?.is_prize ?? true) !== false)
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        wins: Number(g.wins || 0),
+        color: g.color || "#0ea5e9",
+      }))
+      .sort((a, b) => b.wins - a.wins || String(a.name).localeCompare(String(b.name)))
 
-  const GENDER_COLORS: Record<string, string> = {
-    "Masculin": "#000000",
-    "Féminin": "#ff7900"
-  }
+    const totalWinners = giftWinsData.reduce((acc, r) => acc + r.wins, 0)
+
+    return { dailyData: sortedDailyData, cityData, animatorData, giftWinsData, totalWinners }
+  }, [data, giftWins])
 
   const clearFilters = () => {
     setRange({ from: undefined, to: undefined })
@@ -223,17 +213,17 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
             <Card className="bg-slate-50 border-slate-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardDescription className="text-slate-600 font-semibold flex items-center gap-2">
-                  <MapPin className="h-4 w-4" /> Villes Actives
+                  <GiftIcon className="h-4 w-4" /> Total Gagnants
                 </CardDescription>
-                <CardTitle className="text-3xl font-black text-slate-700">{stats.cityData.length}</CardTitle>
+                <CardTitle className="text-3xl font-black text-slate-800">{stats.totalWinners}</CardTitle>
               </CardHeader>
             </Card>
             <Card className="bg-slate-50 border-slate-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardDescription className="text-slate-600 font-semibold flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" /> Jours avec Activité
+                  <MapPin className="h-4 w-4" /> Villes Actives
                 </CardDescription>
-                <CardTitle className="text-3xl font-black text-slate-700">{stats.dailyData.length}</CardTitle>
+                <CardTitle className="text-3xl font-black text-slate-700">{stats.cityData.length}</CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -267,69 +257,65 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
               </CardContent>
             </Card>
 
-            {/* Distribution par sexe */}
-            <Card className="shadow-sm border-slate-200">
+            {/* Gagnants par cadeau */}
+            <Card className="lg:col-span-2 shadow-sm border-slate-200">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChartIcon className="h-5 w-5 text-orange-500" />
-                  Répartition par sexe
+                  <GiftIcon className="h-5 w-5 text-orange-500" />
+                  Gagnants par cadeau
                 </CardTitle>
               </CardHeader>
-              <CardContent className="h-[300px]">
-                {stats.genderData.length > 0 ? (
+              <CardContent style={{ height: Math.max(260, stats.giftWinsData.length * 44) }}>
+                {stats.giftWinsData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={stats.genderData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {stats.genderData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={GENDER_COLORS[entry.name] || "#94a3b8"} />
-                  ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      />
-                      <Legend verticalAlign="bottom" height={36}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400 text-sm">Aucune donnée de sexe disponible</div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Répartition par âge (H/F) */}
-            <Card className="shadow-sm border-slate-200">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-orange-500" />
-                  Répartition par âge (H/F)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                {stats.ageData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.ageData} layout="vertical" margin={{ left: 30, right: 20 }}>
+                    <BarChart data={stats.giftWinsData} layout="vertical" margin={{ left: 40, right: 40 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                       <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={70} />
+                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={140} />
                       <Tooltip
                         cursor={{ fill: "#f1f5f9" }}
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
                       />
-                      <Legend verticalAlign="bottom" height={28} />
-                      <Bar dataKey="Masculin" stackId="age" fill="#000000" barSize={18} />
-                      <Bar dataKey="Féminin" stackId="age" fill="#ff7900" barSize={18} />
+                      <Bar dataKey="wins" radius={[6, 6, 6, 6]} barSize={18}>
+                        {stats.giftWinsData.map((entry: any, index: number) => (
+                          <Cell key={`gift-${entry.id || index}`} fill={entry.color || "#0ea5e9"} />
+                        ))}
+                        <LabelList dataKey="wins" position="right" fontSize={12} fill="#64748b" />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400 text-sm">Aucune donnée d'âge disponible</div>
+                  <div className="flex h-full items-center justify-center text-slate-400 text-sm">Aucune donnée de gains</div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Participations par animateur */}
+            <Card className="shadow-sm border-slate-200">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-orange-500" />
+                  Top animateurs (participations)
+                </CardTitle>
+              </CardHeader>
+              <CardContent style={{ height: Math.max(260, stats.animatorData.length * 44) }}>
+                {stats.animatorData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.animatorData} layout="vertical" margin={{ left: 40, right: 30 }}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={140} />
+                      <Tooltip
+                        cursor={{ fill: "#f1f5f9" }}
+                        contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                      />
+                      <Bar dataKey="total" fill="#0ea5e9" radius={[6, 6, 6, 6]} barSize={18}>
+                        <LabelList dataKey="total" position="right" fontSize={12} fill="#64748b" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-400 text-sm">Aucune donnée animateur</div>
                 )}
               </CardContent>
             </Card>
@@ -342,26 +328,18 @@ export function CampaignStats({ campaignId, logoUrl }: CampaignStatsProps) {
               Participations par Ville
             </CardTitle>
           </CardHeader>
-          <CardContent style={{ height: Math.max(350, stats.cityData.length * 40) }}>
+          <CardContent style={{ height: Math.max(320, stats.cityData.length * 40) }}>
                 {stats.cityData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stats.cityData} layout="vertical" margin={{ left: 40, right: 40 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={100} />
+                      <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={140} />
                       <Tooltip 
                         cursor={{ fill: '#f1f5f9' }}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                       />
-                      <Legend verticalAlign="bottom" height={28} />
-                      <Bar dataKey="Masculin" stackId="city" fill="#000000" radius={[0, 0, 0, 0]} barSize={20} />
-                      <Bar
-                        dataKey="Féminin"
-                        stackId="city"
-                        fill="#ff7900"
-                        radius={[0, 4, 4, 0]}
-                        barSize={20}
-                      >
+                      <Bar dataKey="total" fill="#ff7900" radius={[6, 6, 6, 6]} barSize={18}>
                         <LabelList dataKey="total" position="right" fontSize={12} fill="#64748b" />
                       </Bar>
                     </BarChart>

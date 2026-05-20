@@ -206,6 +206,13 @@ export async function getCampaignStatsRows(params: { campaignId: string; range?:
   return await getCampaignStatsRowsCached(params.campaignId, from, to)
 }
 
+export async function getCampaignGiftWins(params: { campaignId: string; range?: DateRange }) {
+  await assertCampaignAccess(params.campaignId, "stats")
+  const from = params.range?.from || ""
+  const to = params.range?.to || ""
+  return await getCampaignGiftWinsCached(params.campaignId, from, to)
+}
+
 const getCampaignStatsRowsCached = unstable_cache(
   async (campaignId: string, from: string, to: string) => {
     const service = createServiceClient()
@@ -219,7 +226,7 @@ const getCampaignStatsRowsCached = unstable_cache(
     while (hasMore) {
       let query = service
         .from("participants")
-        .select("created_at, city, participant_details(gender, age_range)")
+        .select("created_at, city, name, won, prize_id, participant_details(gender, age_range)")
         .eq("campaign_id", campaignId)
 
       query = applyDateRange(query, range)
@@ -240,5 +247,69 @@ const getCampaignStatsRowsCached = unstable_cache(
     return { success: true as const, data: { rows: allRows } }
   },
   ["campaign-stats-rows"],
+  { revalidate: 30 }
+)
+
+const getCampaignGiftWinsCached = unstable_cache(
+  async (campaignId: string, from: string, to: string) => {
+    const service = createServiceClient()
+    const range: DateRange | undefined = from || to ? { from: from || undefined, to: to || undefined } : undefined
+
+    const { data: gifts, error: giftsError } = await service
+      .from("gifts")
+      .select("id, name, image_url, color, is_prize")
+      .eq("campaign_id", campaignId)
+      .order("name")
+
+    if (giftsError) return { success: false as const, error: giftsError.message }
+
+    const winsMap = new Map<string, number>()
+
+    let offset = 0
+    const limit = 1000
+    let hasMore = true
+
+    while (hasMore) {
+      let query = service
+        .from("participants")
+        .select("prize_id, won, created_at")
+        .eq("campaign_id", campaignId)
+        .eq("won", true)
+        .not("prize_id", "is", null)
+
+      query = applyDateRange(query, range)
+      query = query.range(offset, offset + limit - 1)
+
+      const { data, error } = await query
+      if (error) return { success: false as const, error: error.message }
+
+      ;(data || []).forEach((r: any) => {
+        const prizeId = r.prize_id as string | null
+        if (!prizeId) return
+        winsMap.set(prizeId, (winsMap.get(prizeId) || 0) + 1)
+      })
+
+      if (data && data.length > 0) {
+        offset += limit
+        if (data.length < limit) hasMore = false
+      } else {
+        hasMore = false
+      }
+    }
+
+    const rows = (gifts || []).map((g: any) => ({
+      id: g.id as string,
+      name: g.name as string,
+      image_url: g.image_url as string | null | undefined,
+      color: g.color as string | null | undefined,
+      is_prize: (g as any).is_prize as boolean | null | undefined,
+      wins: winsMap.get(g.id as string) || 0,
+    }))
+
+    rows.sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name))
+
+    return { success: true as const, data: { rows } }
+  },
+  ["campaign-gift-wins"],
   { revalidate: 30 }
 )
