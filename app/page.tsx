@@ -19,6 +19,8 @@ export default async function HomePage() {
 
   // Fallback if not found or if there are other campaigns
   const activeCampaigns = campaigns?.filter(c => c.is_active !== false) || []
+  const headingPrimary = activeCampaigns?.[0]?.theme?.primaryColor || "#ff7900"
+  const headingSecondary = activeCampaigns?.[0]?.theme?.secondaryColor || "#C5A572"
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
@@ -34,8 +36,8 @@ export default async function HomePage() {
             />
           </div> */}
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl md:text-6xl mb-4">
-            <span className="block text-[#ff7900]">Nos Campagnes</span>
-            <span className="block text-[#C5A572]">En Cours</span>
+            <span className="block" style={{ color: headingPrimary }}>Nos Campagnes</span>
+            <span className="block" style={{ color: headingSecondary }}>En Cours</span>
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600">
             Choisissez une campagne ci-dessous pour participer et tenter de gagner des cadeaux exceptionnels !
@@ -48,43 +50,58 @@ export default async function HomePage() {
             activeCampaigns.map(campaign => (
                <Card key={campaign.id} className="flex flex-col overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 ring-1 ring-gray-200 bg-white h-full">
                   {/* Campaign Visual */}
-                  <div className="relative h-56 w-full bg-gray-100 group overflow-hidden">
-                     {campaign.theme?.backgroundUrl ? (
-                        <Image 
-                          src={campaign.theme.backgroundUrl} 
-                          alt={campaign.name} 
-                          fill 
+                  <div className="relative">
+                    <div className="relative h-56 w-full bg-gray-100 group overflow-hidden">
+                      {campaign.theme?.backgroundUrl ? (
+                        <Image
+                          src={campaign.theme.backgroundUrl}
+                          alt={campaign.name}
+                          fill
                           className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                     ) : (
-                        <div 
+                      ) : (
+                        <div
                           className="flex items-center justify-center h-full w-full text-white font-bold text-4xl"
-                          style={{ backgroundColor: campaign.theme?.primaryColor || '#ff7900' }}
+                          style={{ backgroundColor: campaign.theme?.primaryColor || "#ff7900" }}
                         >
-                           {campaign.name.charAt(0)}
+                          {campaign.name.charAt(0)}
                         </div>
-                     )}
-                     
-                     {/* Overlay Gradient */}
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
+                      )}
 
-                     {/* Logo Badge */}
-                     {campaign.theme?.logoUrl && (
-                        <div className="absolute -bottom-8 left-6 z-10">
-                           <div className="relative h-20 w-20 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg p-1">
-                              <Image 
-                                src={campaign.theme.logoUrl} 
-                                alt="Campaign Logo" 
-                                fill 
-                                className="object-contain"
-                              />
-                           </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
+                    </div>
+
+                    {campaign.theme?.logoUrl && (
+                      <div className="absolute left-6 bottom-0 translate-y-1/2 z-10">
+                        <div
+                          className="relative h-20 w-20 rounded-full bg-white shadow-lg p-1 ring-4 ring-white"
+                          style={{
+                            boxShadow: "0 14px 40px rgba(0,0,0,0.20)",
+                          }}
+                        >
+                          <div
+                            className="absolute inset-0 rounded-full"
+                            style={{
+                              boxShadow: campaign.theme?.secondaryColor
+                                ? `0 0 0 2px ${campaign.theme.secondaryColor}`
+                                : undefined,
+                            }}
+                          />
+                          <div className="relative h-full w-full rounded-full overflow-hidden bg-white">
+                            <Image src={campaign.theme.logoUrl} alt="Campaign Logo" fill className="object-contain" />
+                          </div>
                         </div>
-                     )}
+                      </div>
+                    )}
                   </div>
 
                   <CardHeader className="pt-12 pb-2 px-6">
-                     <CardTitle className="text-2xl font-bold text-gray-900 line-clamp-1">{campaign.name}</CardTitle>
+                     <CardTitle
+                       className="text-2xl font-bold line-clamp-1"
+                       style={{ color: campaign.theme?.primaryColor || "#111827" }}
+                     >
+                       {campaign.name}
+                     </CardTitle>
                   </CardHeader>
                   
                   <CardContent className="flex-1 px-6 py-2">
