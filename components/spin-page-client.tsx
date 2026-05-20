@@ -417,11 +417,16 @@ export default function SpinPageClient({
   const bgUrl = campaign?.theme?.backgroundUrl || "/flag-back.jpg"
 
   return (
-    <main
-      className="min-h-screen relative overflow-hidden bg-black"
-      style={bgUrl ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center" } : {}}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 pointer-events-none" />
+    <main className="min-h-screen relative overflow-hidden bg-black">
+      {bgUrl ? (
+        <img
+          src={bgUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full"
+          style={{ objectFit: "fill", filter: "blur(3px)", transform: "scale(1.0)" }}
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-black/30 pointer-events-none" />
       <div className="relative z-10 min-h-screen flex flex-col justify-center">
         <section className="w-full flex flex-col items-center justify-center px-6 md:px-12">
           <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-500">
