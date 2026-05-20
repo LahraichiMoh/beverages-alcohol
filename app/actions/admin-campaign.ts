@@ -185,7 +185,7 @@ export async function getCampaignParticipantsExportChunk(params: {
 
   let query = service
     .from("participants")
-    .select("name, code, city, prize_id, created_at, participant_details(full_name, phone, gender, age_range, address, usual_product)")
+    .select("name, code, city, won, prize_id, created_at, participant_details(full_name, phone, gender, age_range, address, usual_product)")
     .order("created_at", { ascending: false })
 
   query = applyFilters(query, params)
