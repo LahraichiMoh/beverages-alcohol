@@ -51,7 +51,7 @@ export default function TeamLoginPage() {
             Accès Équipe
           </CardTitle>
           <CardDescription>
-            Connectez-vous pour consulter les données de la campagne
+            Connectez-vous pour consulter les données des campagnes
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,9 +87,9 @@ export default function TeamLoginPage() {
                 </button>
               </div>
             </div>
-            
-            <Button 
-              type="submit" 
+
+            <Button
+              type="submit"
               className="w-full font-bold text-lg h-12 bg-orange-600 hover:bg-orange-700 text-white"
               disabled={loading}
             >
@@ -102,7 +102,7 @@ export default function TeamLoginPage() {
                 "Se connecter"
               )}
             </Button>
-            
+
             <div className="pt-4 text-center">
               <Button variant="link" onClick={() => router.push("/admin/login")} className="text-slate-500 text-xs">
                 Accès Super Admin

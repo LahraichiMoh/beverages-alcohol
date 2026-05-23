@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Trash2, Shield, Loader2, Save, UserPlus, Key } from "lucide-react"
 import { toast } from "sonner"
-import { getTeamMembers, createTeamMember, updateTeamMember, deleteTeamMember, type TeamMember } from "@/app/actions/team"
+import { getTeamMembers, createTeamMember, createTeamMemberAllCampaigns, updateTeamMember, deleteTeamMember, type TeamMember } from "@/app/actions/team"
 
 interface CampaignTeamManagerProps {
   campaignId: string
@@ -23,6 +23,7 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
   // New member form
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [applyToAllCampaigns, setApplyToAllCampaigns] = useState(false)
   const [permissions, setPermissions] = useState({
     can_view_participants: true,
     can_view_stats: true,
@@ -49,21 +50,35 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
     if (!username || !password) return
     
     setSaving(true)
-    const res = await createTeamMember({
-      campaign_id: campaignId,
-      username,
-      password,
-      permissions
-    })
-
-    if (res.success && res.data) {
-      setMembers([res.data, ...members])
-      setShowAddForm(false)
-      setUsername("")
-      setPassword("")
-      toast.success("Membre d'équipe ajouté")
+    if (applyToAllCampaigns) {
+      const res = await createTeamMemberAllCampaigns({ username, password, permissions })
+      if (res.success) {
+        await loadMembers()
+        setShowAddForm(false)
+        setUsername("")
+        setPassword("")
+        setApplyToAllCampaigns(false)
+        toast.success("Accès ajouté à toutes les campagnes")
+      } else {
+        toast.error("Erreur: " + res.error)
+      }
     } else {
-      toast.error("Erreur: " + res.error)
+      const res = await createTeamMember({
+        campaign_id: campaignId,
+        username,
+        password,
+        permissions
+      })
+
+      if (res.success && res.data) {
+        setMembers([res.data, ...members])
+        setShowAddForm(false)
+        setUsername("")
+        setPassword("")
+        toast.success("Membre d'équipe ajouté")
+      } else {
+        toast.error("Erreur: " + res.error)
+      }
     }
     setSaving(false)
   }
@@ -138,6 +153,17 @@ export function CampaignTeamManager({ campaignId, campaignName }: CampaignTeamMa
                     <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3">
+                <Checkbox
+                  id="tm-all-campaigns"
+                  checked={applyToAllCampaigns}
+                  onCheckedChange={(checked) => setApplyToAllCampaigns(!!checked)}
+                />
+                <Label htmlFor="tm-all-campaigns" className="text-sm font-medium leading-none cursor-pointer">
+                  Ajouter cet accès à toutes les campagnes
+                </Label>
               </div>
 
               <div className="space-y-3 pt-2">

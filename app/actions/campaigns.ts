@@ -399,8 +399,12 @@ export async function getCampaignGifts(campaignId: string) {
   let hasTeamAccessForCampaign = false
   if (teamCookie) {
     try {
-      const parsed = JSON.parse(teamCookie.value) as { campaign_id?: string }
-      hasTeamAccessForCampaign = parsed?.campaign_id === campaignId
+      const parsed = JSON.parse(teamCookie.value) as any
+      if (parsed?.campaign_id) {
+        hasTeamAccessForCampaign = parsed.campaign_id === campaignId
+      } else if (Array.isArray(parsed?.memberships)) {
+        hasTeamAccessForCampaign = parsed.memberships.some((m: any) => m?.campaign_id === campaignId)
+      }
     } catch {
       hasTeamAccessForCampaign = false
     }

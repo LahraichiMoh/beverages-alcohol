@@ -5,19 +5,32 @@ import { createServiceClient } from "@/lib/supabase/service"
 import { cookies } from "next/headers"
 import { unstable_cache } from "next/cache"
 
-type TeamAccessCookie = {
-  id: string
-  username: string
-  campaign_id: string
-  permissions: {
-    can_view_participants: boolean
-    can_view_stats: boolean
-    can_view_gifts: boolean
-    can_edit_gifts: boolean
-  }
-  campaign_slug: string
-  campaign_name: string
+type TeamPermissions = {
+  can_view_participants: boolean
+  can_view_stats: boolean
+  can_view_gifts: boolean
+  can_edit_gifts: boolean
 }
+
+type TeamAccessCookie =
+  | {
+      username: string
+      memberships: Array<{
+        id: string
+        campaign_id: string
+        permissions: TeamPermissions
+        campaign_slug?: string
+        campaign_name?: string
+      }>
+    }
+  | {
+      id: string
+      username: string
+      campaign_id: string
+      permissions: TeamPermissions
+      campaign_slug?: string
+      campaign_name?: string
+    }
 
 async function hasSuperAdminAccess() {
   const supabase = await createClient()
@@ -43,10 +56,16 @@ async function assertCampaignAccess(campaignId: string, permission: "participant
 
   const team = await getTeamAccessCookie()
   if (!team) throw new Error("Unauthorized")
-  if (team.campaign_id !== campaignId) throw new Error("Unauthorized")
+  const resolved: { campaign_id: string; permissions: TeamPermissions } | null = (team as any).memberships
+    ? (((team as any).memberships as any[]).find((m) => m?.campaign_id === campaignId) as any) || null
+    : (team as any).campaign_id === campaignId
+      ? (team as any)
+      : null
 
-  if (permission === "participants" && !team.permissions.can_view_participants) throw new Error("Unauthorized")
-  if (permission === "stats" && !team.permissions.can_view_stats) throw new Error("Unauthorized")
+  if (!resolved) throw new Error("Unauthorized")
+
+  if (permission === "participants" && !resolved.permissions.can_view_participants) throw new Error("Unauthorized")
+  if (permission === "stats" && !resolved.permissions.can_view_stats) throw new Error("Unauthorized")
 }
 
 export async function getCampaignParticipantFilterOptions(campaignId: string) {

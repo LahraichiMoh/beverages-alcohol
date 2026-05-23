@@ -17,7 +17,8 @@ export default async function AdminDashboardPage() {
   // 1. Check for Team Member Access
   const teamAccess = await getTeamAccess()
   if (teamAccess) {
-    return <AdminDashboard userId={teamAccess.id} teamAccess={teamAccess} />
+    const userId = (teamAccess as any).id || (teamAccess as any).username
+    return <AdminDashboard userId={userId} teamAccess={teamAccess as any} />
   }
 
   // 2. Check for Super Admin

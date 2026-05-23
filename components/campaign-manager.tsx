@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Plus, Trash2, Globe, Settings, Gift as GiftIcon, BarChart3, Palette, Save, Upload, ExternalLink, Users, Trophy, Shield } from "lucide-react"
 import { toast } from "sonner"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import { CampaignStats } from "@/components/campaign-stats"
 import { CampaignTeamManager } from "@/components/campaign-team-manager"
 import { BrandLoader } from "@/components/brand-loader"
 import { createClient } from "@/lib/supabase/client"
+import { createTeamMembersForCampaigns } from "@/app/actions/team"
 
 interface CampaignManagerProps {
   teamAccess?: {
@@ -46,8 +48,19 @@ interface CampaignManagerProps {
 
 export function CampaignManager({ teamAccess }: CampaignManagerProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
+  const [loading, setLoading] = useState(!teamAccess)
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(() => {
+    if (!teamAccess) return null
+    return {
+      id: teamAccess.campaign_id,
+      name: teamAccess.campaign_name || teamAccess.campaign_slug || "Campagne",
+      slug: teamAccess.campaign_slug || "",
+      description: "",
+      theme: {},
+      is_active: true,
+      created_at: new Date().toISOString(),
+    }
+  })
   
   // Auto-select campaign if team access is provided
   useEffect(() => {
@@ -58,6 +71,18 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
       }
     }
   }, [teamAccess, campaigns])
+
+  const [showTeamDialog, setShowTeamDialog] = useState(false)
+  const [teamUsername, setTeamUsername] = useState("")
+  const [teamPassword, setTeamPassword] = useState("")
+  const [teamCampaignIds, setTeamCampaignIds] = useState<string[]>([])
+  const [teamPermissions, setTeamPermissions] = useState({
+    can_view_participants: true,
+    can_view_stats: true,
+    can_view_gifts: true,
+    can_edit_gifts: false,
+  })
+  const [savingTeam, setSavingTeam] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [locationCities, setLocationCities] = useState<Array<{ id: string; name: string }>>([])
   const [locationVenues, setLocationVenues] = useState<
@@ -121,6 +146,12 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
   }, [editingCampaign])
 
   const loadCampaigns = async () => {
+    if (teamAccess) {
+      setCampaigns([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     const res = await getCampaigns()
     if (res.success && res.data) {
@@ -592,10 +623,181 @@ export function CampaignManager({ teamAccess }: CampaignManagerProps) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Mes Campagnes</h2>
-        <Button onClick={() => setShowCreateForm(true)} variant="admin" size="lg">
-          <Plus className="mr-2 h-4 w-4" /> Nouvelle Campagne
-        </Button>
+        {!teamAccess ? (
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowTeamDialog(true)} variant="admin-outline" size="lg">
+              <Shield className="mr-2 h-4 w-4" /> Équipe
+            </Button>
+            <Button onClick={() => setShowCreateForm(true)} variant="admin" size="lg">
+              <Plus className="mr-2 h-4 w-4" /> Nouvelle Campagne
+            </Button>
+          </div>
+        ) : null}
       </div>
+
+      <Dialog
+        open={showTeamDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowTeamDialog(false)
+            setTeamUsername("")
+            setTeamPassword("")
+            setTeamCampaignIds([])
+            setTeamPermissions({
+              can_view_participants: true,
+              can_view_stats: true,
+              can_view_gifts: true,
+              can_edit_gifts: false,
+            })
+          } else {
+            setShowTeamDialog(true)
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <div className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-orange-500" />
+                Gestion de l&apos;équipe
+              </div>
+              <div className="text-sm text-slate-600">
+                Créez un accès équipe et choisissez les campagnes autorisées.
+              </div>
+            </div>
+
+            <form
+              className="space-y-5"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (!teamUsername || !teamPassword) return
+                if (teamCampaignIds.length === 0) {
+                  toast.error("Sélectionnez au moins une campagne")
+                  return
+                }
+                setSavingTeam(true)
+                const res = await createTeamMembersForCampaigns({
+                  campaignIds: teamCampaignIds,
+                  username: teamUsername,
+                  password: teamPassword,
+                  permissions: teamPermissions,
+                })
+                setSavingTeam(false)
+                if (res.success) {
+                  toast.success("Accès équipe créé / mis à jour")
+                  setShowTeamDialog(false)
+                } else {
+                  toast.error(res.error || "Erreur lors de la création")
+                }
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Identifiant</Label>
+                  <Input value={teamUsername} onChange={(e) => setTeamUsername(e.target.value)} placeholder="ex: jean.dupont" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Mot de passe</Label>
+                  <Input type="password" value={teamPassword} onChange={(e) => setTeamPassword(e.target.value)} placeholder="••••••••" required />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-bold uppercase tracking-wider text-slate-500">Campagnes</Label>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                  <div className="max-h-56 overflow-auto pr-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {campaigns.map((c) => {
+                      const checked = teamCampaignIds.includes(c.id)
+                      return (
+                        <div key={c.id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              const next = v === true ? [...teamCampaignIds, c.id] : teamCampaignIds.filter((id) => id !== c.id)
+                              setTeamCampaignIds(next)
+                            }}
+                          />
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-slate-900 truncate">{c.name}</div>
+                            <div className="text-[10px] text-slate-500 truncate">/{c.slug}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between pt-3">
+                    <div className="text-xs font-semibold text-slate-600">
+                      {teamCampaignIds.length} sélectionnée{teamCampaignIds.length === 1 ? "" : "s"}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="admin-ghost"
+                      size="sm"
+                      onClick={() => setTeamCampaignIds(campaigns.map((c) => c.id))}
+                    >
+                      Tout sélectionner
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="admin-ghost"
+                      size="sm"
+                      onClick={() => setTeamCampaignIds([])}
+                    >
+                      Tout désélectionner
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-bold uppercase tracking-wider text-slate-500">Permissions</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-slate-200">
+                    <Checkbox
+                      checked={teamPermissions.can_view_participants}
+                      onCheckedChange={(checked) =>
+                        setTeamPermissions({ ...teamPermissions, can_view_participants: !!checked })
+                      }
+                    />
+                    <Label className="text-sm font-medium leading-none cursor-pointer">Voir les participants</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-slate-200">
+                    <Checkbox
+                      checked={teamPermissions.can_view_stats}
+                      onCheckedChange={(checked) => setTeamPermissions({ ...teamPermissions, can_view_stats: !!checked })}
+                    />
+                    <Label className="text-sm font-medium leading-none cursor-pointer">Voir les statistiques</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-slate-200">
+                    <Checkbox
+                      checked={teamPermissions.can_view_gifts}
+                      onCheckedChange={(checked) => setTeamPermissions({ ...teamPermissions, can_view_gifts: !!checked })}
+                    />
+                    <Label className="text-sm font-medium leading-none cursor-pointer">Voir les cadeaux</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-slate-200">
+                    <Checkbox
+                      checked={teamPermissions.can_edit_gifts}
+                      onCheckedChange={(checked) => setTeamPermissions({ ...teamPermissions, can_edit_gifts: !!checked })}
+                    />
+                    <Label className="text-sm font-medium leading-none cursor-pointer text-orange-600 font-bold">Modifier les cadeaux</Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="admin-outline" onClick={() => setShowTeamDialog(false)} disabled={savingTeam}>
+                  Annuler
+                </Button>
+                <Button type="submit" variant="admin" disabled={savingTeam || teamCampaignIds.length === 0}>
+                  {savingTeam ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Créer l&apos;accès
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {showCreateForm && (
         <Card
