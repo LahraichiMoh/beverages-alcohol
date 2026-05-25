@@ -362,7 +362,7 @@ export function SpinnerWheel({
                               <span
                                 className="text-center font-black uppercase text-sm md:text-base lg:text-lg leading-none break-words"
                                 style={{
-                                  maxWidth: "100px",
+                                  
                                   textShadow: isLightBg ? "none" : "0 2px 4px rgba(0,0,0,0.5)"
                                 }}
                               >
