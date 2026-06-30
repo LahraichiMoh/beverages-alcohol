@@ -271,7 +271,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                   <Label htmlFor="newIsPrize" className="cursor-pointer">Cadeau réel (Gagnant)</Label>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-tight">
-                  Décochez pour les segments "Perdu" (ex: Oups, Rejouer). 
+                  Décochez pour les segments "Perdu" (ex: Retentez votre chance !!). 
                   Le stock ne sera pas décompté.
                 </p>
               </div>
@@ -345,7 +345,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                   <Label htmlFor="editIsPrize" className="cursor-pointer">Cadeau réel (Gagnant)</Label>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-tight">
-                  Décochez pour les segments "Perdu" (ex: Oups, Rejouer). 
+                  Décochez pour les segments "Perdu" (ex: Retentez votre chance !!). 
                   Le stock ne sera pas décompté.
                 </p>
               </div>
