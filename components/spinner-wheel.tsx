@@ -483,7 +483,7 @@ export function SpinnerWheel({
                     className={`text-2xl md:text-3xl font-extrabold ${resultPrize.is_prize === false ? "text-red-600" : (theme === "gold" ? "text-amber-700" : "text-blue-900")}`}
                     style={resultPrize.is_prize !== false && customColors?.primary ? { color: customColors.primary } : undefined}
                   >
-                    {resultPrize.is_prize === false ? "Oups !" : "Félicitations !"}
+                    {resultPrize.is_prize === false ? "Retentez votre chance !" : "Félicitations !"}
                   </p>
                   <p 
                     className={`text-xl md:text-2xl font-bold mt-2 ${theme === "gold" ? "text-amber-800" : "text-blue-800"}`}
