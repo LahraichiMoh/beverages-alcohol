@@ -535,7 +535,7 @@ export function SpinnerWheel({
               )}
               <div className="relative z-10">
                   <p className="text-2xl md:text-3xl font-extrabold text-red-600 mb-4">
-                    Oups !
+                    Retentez votre chance !!
                   </p>
                   <p className="text-lg text-gray-800 mb-6">
                     {spinError.includes("City limit") 
