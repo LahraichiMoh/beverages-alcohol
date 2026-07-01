@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { SpinnerWheel } from "@/components/spinner-wheel"
 import { Button } from "@/components/ui/button"
-import { finalizeSpin, getSpinData } from "@/app/actions/finalize-spin"
+import { finalizeSpin, getSpinData, markSpinAsLostNoStock } from "@/app/actions/finalize-spin"
+import { submitParticipation } from "@/app/actions/submit-participation"
+import { getAvailablePrizes, getActiveCampaign } from "@/app/actions/campaigns"
 import { Loader2 } from "lucide-react"
 import type { Campaign } from "@/app/actions/campaigns"
 
 const CAMPAIGN_CACHE_KEY = "spin_campaign_cache_v1"
+const PARTICIPANT_DRAFT_PREFIX = "spin_participant_draft_v1:"
 
 interface Participant {
   id: string
@@ -44,24 +47,27 @@ export default function SpinPageClient({
   initialCampaign,
   initialPrizes,
   initialCityId,
+  draft,
 }: {
   participantId: string
   initialParticipant: Participant
   initialCampaign: Campaign | null
   initialPrizes: Prize[]
   initialCityId?: string
+  draft?: boolean
 }) {
   const router = useRouter()
   const [participant, setParticipant] = useState<Participant>(initialParticipant)
   const [campaign, setCampaign] = useState<Campaign | null>(initialCampaign)
   const [prizes, setPrizes] = useState<Prize[]>(initialPrizes)
   const [loading, setLoading] = useState(false)
-  const [hasSpun, setHasSpun] = useState(!!initialParticipant.won)
+  const [hasSpun, setHasSpun] = useState(!!initialParticipant.won || !!initialParticipant.prize_id)
   const [isAdmin, setIsAdmin] = useState(false)
   const [resultPrize, setResultPrize] = useState<{ id: string; name: string; imageUrl?: string; color?: string; is_prize?: boolean } | null>(null)
   const [spinError, setSpinError] = useState<string | null>(null)
   const [cityId, setCityId] = useState<string | undefined>(initialCityId)
   const [creatingReplay, setCreatingReplay] = useState(false)
+  const [isPersisted, setIsPersisted] = useState(!draft)
 
   const cacheCampaign = (c: Campaign | null) => {
     try {
@@ -71,6 +77,57 @@ export default function SpinPageClient({
   }
 
   const effectiveCampaignId = participant.campaign_id || campaign?.id || null
+
+  useEffect(() => {
+    if (!draft) return
+    try {
+      const raw = window.sessionStorage.getItem(`${PARTICIPANT_DRAFT_PREFIX}${participantId}`)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as any
+
+      const draftCampaignId = (parsed?.campaignId as string | undefined) || null
+      const draftName = String(parsed?.name || "")
+      const draftCode = String(parsed?.code || "")
+      const draftCity = String(parsed?.city || "")
+      const draftCityId = (parsed?.city_id as string | undefined) || undefined
+      const draftVenueId = (parsed?.venue_id as string | undefined) || undefined
+      const draftVenueType = (parsed?.venue_type as string | undefined) || undefined
+
+      if (draftCityId) setCityId(draftCityId)
+      setParticipant((p) => ({
+        ...p,
+        id: participantId,
+        name: draftName || p.name,
+        code: draftCode || p.code,
+        city: draftCity || p.city,
+        city_id: draftCityId ?? p.city_id,
+        venue_id: draftVenueId ?? p.venue_id,
+        venue_type: draftVenueType ?? p.venue_type,
+        campaign_id: draftCampaignId ?? p.campaign_id,
+        won: false,
+        prize_id: null,
+      }))
+
+      const cached = window.sessionStorage.getItem(CAMPAIGN_CACHE_KEY)
+      if (cached) {
+        try {
+          const cc = JSON.parse(cached) as Campaign
+          if (!draftCampaignId || cc?.id === draftCampaignId) setCampaign(cc)
+        } catch {}
+      }
+
+      ;(async () => {
+        let resolvedCampaignId = draftCampaignId
+        if (!resolvedCampaignId) {
+          const active = await getActiveCampaign()
+          if (active.success && active.data?.id) resolvedCampaignId = active.data.id
+        }
+        if (!resolvedCampaignId) return
+        const giftsRes = await getAvailablePrizes(resolvedCampaignId, draftCityId, draftCity, draftVenueId)
+        if (giftsRes.success && giftsRes.data) setPrizes(giftsRes.data as any)
+      })()
+    } catch {}
+  }, [draft, participantId])
 
   useEffect(() => {
     const supabase = createClient()
@@ -189,6 +246,7 @@ export default function SpinPageClient({
   }, [campaign?.id, campaign?.theme?.replayStartedAt, participant, router])
 
   useEffect(() => {
+    if (!isPersisted) return
     const sync = async () => {
       const spinData = await getSpinData(participantId)
       if (!spinData.success || !spinData.data) return
@@ -196,12 +254,13 @@ export default function SpinPageClient({
       setCampaign(spinData.data.campaign as any)
       setPrizes((spinData.data.prizes as any) || [])
       setCityId(spinData.data.cityId)
-      setHasSpun(!!(spinData.data.participant as any)?.won)
+      setHasSpun(!!(spinData.data.participant as any)?.won || !!(spinData.data.participant as any)?.prize_id)
     }
     sync()
-  }, [participantId])
+  }, [isPersisted, participantId])
 
   useEffect(() => {
+    if (!isPersisted) return
     const supabase = createClient()
     let refreshTimer: ReturnType<typeof setTimeout> | null = null
     let refreshInFlight = false
@@ -257,7 +316,7 @@ export default function SpinPageClient({
       if (refreshTimer) clearTimeout(refreshTimer)
       supabase.removeChannel(channel)
     }
-  }, [effectiveCampaignId, participantId])
+  }, [effectiveCampaignId, isPersisted, participantId])
 
   const wheelPrizes = useMemo(
     () =>
@@ -272,9 +331,35 @@ export default function SpinPageClient({
     [prizes],
   )
 
+  const ensureParticipantExists = async () => {
+    if (isPersisted) return { success: true as const }
+    const name = String(participant.name || "").trim()
+    const code = String(participant.code || "").trim()
+    const city = String(participant.city || "").trim()
+    const campaignId = participant.campaign_id || campaign?.id
+    const meta = {
+      city_id: participant.city_id ?? cityId ?? undefined,
+      venue_id: participant.venue_id ?? undefined,
+      venue_type: participant.venue_type ?? undefined,
+    }
+    const res = await submitParticipation(name, code, city, campaignId, meta as any, participantId)
+    if (!res.success) return { success: false as const, error: res.error || "Erreur lors de l'enregistrement" }
+    setIsPersisted(true)
+    setParticipant((p) => ({ ...p, campaign_id: campaignId || p.campaign_id }))
+    try {
+      window.sessionStorage.removeItem(`${PARTICIPANT_DRAFT_PREFIX}${participantId}`)
+    } catch {}
+    return { success: true as const }
+  }
+
   const handleSpinComplete = async (selectedPrizeId: string) => {
     try {
       setSpinError(null)
+      const created = await ensureParticipantExists()
+      if (!created.success) {
+        setSpinError((created as any).error || "Erreur lors de l'enregistrement")
+        return
+      }
       const selectedPrize = prizes.find((p) => p.id === selectedPrizeId)
 
       const result = await finalizeSpin(participantId, selectedPrizeId, cityId, isAdmin)
@@ -317,6 +402,28 @@ export default function SpinPageClient({
       setHasSpun(true)
     } catch (error) {
       setSpinError("Une erreur est survenue. Veuillez réessayer.")
+    }
+  }
+
+  const handleNoStock = async () => {
+    try {
+      const created = await ensureParticipantExists()
+      if (!created.success) {
+        setSpinError((created as any).error || "Erreur lors de l'enregistrement")
+        return
+      }
+      const lockPrizeId = prizes.find((p) => p.is_prize === false)?.id || prizes[0]?.id || null
+      const r = await markSpinAsLostNoStock(participantId, lockPrizeId)
+      if (!r.success) {
+        setSpinError(r.error || "Erreur lors de l'enregistrement")
+        return
+      }
+      setParticipant((p) => ({ ...p, won: false, prize_id: lockPrizeId }))
+      setSpinError("Stock épuisé.")
+      setResultPrize(null)
+      setHasSpun(true)
+    } catch {
+      setSpinError("Erreur lors de l'enregistrement")
     }
   }
 
@@ -434,6 +541,7 @@ export default function SpinPageClient({
               participantName={participant.name}
               prizes={wheelPrizes}
               onSpinComplete={handleSpinComplete}
+              onNoStock={handleNoStock}
               hasSpun={hasSpun}
               resultPrize={resultPrize}
               spinError={spinError}

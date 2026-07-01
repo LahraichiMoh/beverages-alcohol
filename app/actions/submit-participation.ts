@@ -14,6 +14,7 @@ export async function submitParticipation(
     venue_id?: string
     venue_type?: string
   },
+  fixedParticipantId?: string,
 ) {
   try {
     const supabase = createServiceClient()
@@ -68,6 +69,7 @@ export async function submitParticipation(
       agreed_to_terms: true,
       won: false,
     }
+    if (fixedParticipantId) insertData.id = fixedParticipantId
 
     if (effectiveCampaignId) {
       insertData.campaign_id = effectiveCampaignId

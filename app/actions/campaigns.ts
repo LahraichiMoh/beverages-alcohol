@@ -698,7 +698,6 @@ export async function getAvailablePrizes(campaignId: string, cityId?: string, ci
       .select("prize_id")
       .eq("campaign_id", campaignId)
       .eq("venue_id", venueId)
-      .eq("won", true)
       .not("prize_id", "is", null)
 
     if (replayStartedAt) {
@@ -715,11 +714,40 @@ export async function getAvailablePrizes(campaignId: string, cityId?: string, ci
     })
   }
 
-  // 4. Determine availability
+  // 4. Determine availability - count fake gift uses
+  // First count all uses (including fake gifts)
+  const giftCounts = new Map<string, number>()
+  let allParticipantsQuery = supabase
+    .from("participants")
+    .select("prize_id")
+    .eq("campaign_id", campaignId)
+    .not("prize_id", "is", null)
+  
+  if (replayStartedAt) {
+    allParticipantsQuery = allParticipantsQuery.gte("created_at", replayStartedAt)
+  }
+  
+  const { data: allParticipants } = await allParticipantsQuery
+  allParticipants?.forEach(p => {
+    if (p.prize_id) {
+      giftCounts.set(p.prize_id, (giftCounts.get(p.prize_id) || 0) + 1)
+    }
+  })
+
   const availableGifts = gifts.map(gift => {
     const venueTotal = venueTotals.get(gift.id) || 0
     const effectiveGlobalTotal = venueTotal > 0 ? venueTotal : gift.max_winners
-    const globalAvailable = effectiveGlobalTotal === 0 || gift.current_winners < effectiveGlobalTotal
+    const currentCount = giftCounts.get(gift.id) || 0
+    
+    // Check availability
+    let globalAvailable = true
+    if (effectiveGlobalTotal > 0) {
+      if (gift.is_prize === false) {
+        globalAvailable = currentCount < effectiveGlobalTotal
+      } else {
+        globalAvailable = gift.current_winners < effectiveGlobalTotal
+      }
+    }
     
     // Venue Limit Check
     let venueAvailable = true

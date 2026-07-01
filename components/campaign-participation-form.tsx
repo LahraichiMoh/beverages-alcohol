@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
-import { submitParticipation } from "@/app/actions/submit-participation"
 import { createClient } from "@/lib/supabase/client"
 import { logoutCampaignAccess } from "@/app/actions/campaigns"
 import {
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 const CAMPAIGN_CACHE_KEY = "spin_campaign_cache_v1"
+const PARTICIPANT_DRAFT_PREFIX = "spin_participant_draft_v1:"
 
 interface CampaignParticipationFormProps {
   campaignId: string
@@ -253,38 +253,42 @@ export function CampaignParticipationForm({ campaignId, campaignName, theme }: C
                   setLoading(true)
                   setError("")
                   try {
-                    const res = await submitParticipation(
-                      animatorName,
-                      selectedVenue.name,
-                      selectedCity.name,
-                      campaignId,
-                      {
-                        city_id: selectedCity.id,
-                        venue_id: selectedVenue.id,
-                        venue_type: selectedVenue.type,
-                      },
-                    )
-                    if (res.success && res.participantId) {
-                      setConfirmOpen(false)
-                      try {
-                        window.sessionStorage.setItem(
-                          CAMPAIGN_CACHE_KEY,
-                          JSON.stringify({
-                            id: campaignId,
-                            name: campaignName,
-                            slug: "",
-                            description: "",
-                            theme,
-                            is_active: true,
-                            created_at: new Date().toISOString(),
-                          }),
-                        )
-                      } catch {}
-                      router.push(`/spin/${res.participantId}`)
-                      return
-                    }
-                    setError(res.error || "Erreur lors de l'inscription")
+                    const draftId = globalThis.crypto?.randomUUID
+                      ? globalThis.crypto.randomUUID()
+                      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+
+                    try {
+                      window.sessionStorage.setItem(
+                        `${PARTICIPANT_DRAFT_PREFIX}${draftId}`,
+                        JSON.stringify({
+                          name: animatorName,
+                          code: selectedVenue.name,
+                          city: selectedCity.name,
+                          campaignId,
+                          city_id: selectedCity.id,
+                          venue_id: selectedVenue.id,
+                          venue_type: selectedVenue.type,
+                        }),
+                      )
+                    } catch {}
+
                     setConfirmOpen(false)
+                    try {
+                      window.sessionStorage.setItem(
+                        CAMPAIGN_CACHE_KEY,
+                        JSON.stringify({
+                          id: campaignId,
+                          name: campaignName,
+                          slug: "",
+                          description: "",
+                          theme,
+                          is_active: true,
+                          created_at: new Date().toISOString(),
+                        }),
+                      )
+                    } catch {}
+                    router.push(`/spin/${draftId}?draft=1`)
+                    return
                   } catch (err) {
                     setError("Une erreur s'est produite")
                     setConfirmOpen(false)

@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { submitParticipation } from "@/app/actions/submit-participation"
+import { getActiveCampaign } from "@/app/actions/campaigns"
 import type { Campaign } from "@/app/actions/campaigns"
 import Image from "next/image"
 
 const CAMPAIGN_CACHE_KEY = "spin_campaign_cache_v1"
+const PARTICIPANT_DRAFT_PREFIX = "spin_participant_draft_v1:"
 
 const GENERAL_CONDITIONS = `J'autorise la société et ses représentants, à reproduire et exploiter mon image en photo dans le cadre d'un reportage de remise de lots. Les photos seront utilisées à des fins de promotion et de communication sur les réseaux sociaux et/ou la presse nationale et pour des rapports internes de l'entreprise.
 
@@ -49,11 +50,13 @@ export function ParticipationForm({ campaign, city: prefilledCity }: Participati
         setIsLoading(false)
         return
       }
-
-      const result = await submitParticipation(name, code, city, campaign?.id)
-
-      if (!result.success) {
-        setError(result.error || "Une erreur s'est produite")
+      let campaignId = campaign?.id
+      if (!campaignId) {
+        const active = await getActiveCampaign()
+        campaignId = active.success && active.data ? active.data.id : undefined
+      }
+      if (!campaignId) {
+        setError("Aucune campagne active")
         setIsLoading(false)
         return
       }
@@ -63,7 +66,16 @@ export function ParticipationForm({ campaign, city: prefilledCity }: Participati
           window.sessionStorage.setItem(CAMPAIGN_CACHE_KEY, JSON.stringify(campaign))
         } catch {}
       }
-      router.push(`/spin/${result.participantId}`)
+      const draftId = globalThis.crypto?.randomUUID
+        ? globalThis.crypto.randomUUID()
+        : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+      try {
+        window.sessionStorage.setItem(
+          `${PARTICIPANT_DRAFT_PREFIX}${draftId}`,
+          JSON.stringify({ name, code, city, campaignId }),
+        )
+      } catch {}
+      router.push(`/spin/${draftId}?draft=1`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Une erreur s'est produite"
       console.error("[v0] Form submission error:", errorMessage)

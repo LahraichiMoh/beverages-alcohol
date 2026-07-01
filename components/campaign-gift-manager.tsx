@@ -272,7 +272,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-tight">
                   Décochez pour les segments "Perdu" (ex: Retentez votre chance !!). 
-                  Le stock ne sera pas décompté.
+                  Le stock peut être configuré pour limiter le nombre de tirages.
                 </p>
               </div>
               <div className="col-span-2 space-y-2">
@@ -346,7 +346,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-tight">
                   Décochez pour les segments "Perdu" (ex: Retentez votre chance !!). 
-                  Le stock ne sera pas décompté.
+                  Le stock peut être configuré pour limiter le nombre de tirages.
                 </p>
               </div>
               <div className="col-span-2 space-y-2">
@@ -398,8 +398,9 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
           const totalLabel =
             venueTotal > 0 ? venueTotal : gift.max_winners === 0 ? "∞" : gift.max_winners
           const showProgress = effectiveTotal > 0
+          const usedCount = gift.is_prize === false ? (gift.all_time_hits || 0) : (gift.current_winners || 0)
           const progressPct = showProgress
-            ? Math.min(100, Math.max(0, (Number(gift.current_winners || 0) / effectiveTotal) * 100))
+            ? Math.min(100, Math.max(0, (Number(usedCount) / effectiveTotal) * 100))
             : 0
 
           return (
@@ -430,7 +431,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
             </CardHeader>
             <CardContent className="pt-2 flex flex-col gap-2">
               <div className="text-sm text-slate-500">
-                Utilisés: {gift.current_winners} / {totalLabel}
+                Utilisés: {gift.is_prize === false ? (gift.all_time_hits || 0) : gift.current_winners} / {totalLabel}
               </div>
               {typeof gift.all_time_hits === "number" ? (
                 <div className="text-xs text-slate-400">
@@ -444,7 +445,7 @@ export function CampaignGiftManager({ campaignId, campaignName, readOnly = false
                   role="progressbar"
                   aria-valuemin={0}
                   aria-valuemax={effectiveTotal}
-                  aria-valuenow={Math.min(effectiveTotal, Math.max(0, Number(gift.current_winners || 0)))}
+                  aria-valuenow={Math.min(effectiveTotal, Math.max(0, Number(usedCount)))}
                 >
                   <div
                     className="h-full transition-[width] duration-300"

@@ -124,15 +124,42 @@ export function SpinnerWheel({
 
     setIsSpinning(true)
 
-    // Choose among available prizes to ensure we never land on an exhausted wedge
-    const availableIndices = prizes
-      .map((p, i) => (p.available !== false ? i : -1))
-      .filter((i) => i !== -1)
-    if (availableIndices.length === 0) {
+    // Weighted random selection:
+    // - Real gifts get weight (stock remaining + 1)
+    // - Fake gifts get weight 1 (always have small chance)
+    const availablePrizes: { index: number; weight: number }[] = []
+
+    prizes.forEach((p, i) => {
+      if (p.available === false) return
+
+      if (p.is_prize !== false) {
+        // Real gift: weight based on max_winners, default to 10 if unlimited
+        const remaining = p.max_winners > 0 
+          ? Math.max(1, p.max_winners - p.current_winners) 
+          : 10
+        availablePrizes.push({ index: i, weight: remaining })
+      } else {
+        // Fake gift: gets weight 3 so it comes up more often
+        availablePrizes.push({ index: i, weight: 3 })
+      }
+    })
+
+    if (availablePrizes.length === 0) {
       setIsSpinning(false)
       return
     }
-    const selectedIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)]
+
+    // Weighted random selection
+    const totalWeight = availablePrizes.reduce((sum, p) => sum + p.weight, 0)
+    let random = Math.random() * totalWeight
+    let selectedIndex = availablePrizes[0].index
+    for (const p of availablePrizes) {
+      random -= p.weight
+      if (random <= 0) {
+        selectedIndex = p.index
+        break
+      }
+    }
     const selectedPrizeId = prizes[selectedIndex].id
 
     const segmentAngle = 360 / prizes.length

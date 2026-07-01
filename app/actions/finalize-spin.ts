@@ -77,8 +77,37 @@ export async function finalizeSpin(participantId: string, selectedPrizeId: strin
       throw prizeFetchError
     }
 
-    // If it's NOT a prize (e.g. "Oops"), we don't check limits or increment winners
+    // If it's NOT a prize (e.g. "Oops"), optionally check limits but don't increment winners
     if (prizeData.is_prize === false) {
+      // Optional: Check limits for fake gifts too
+      const venueTotalRes = await getGiftGlobalTotalFromVenueLimits(selectedPrizeId)
+      const venueTotal = venueTotalRes.success ? venueTotalRes.data : 0
+      const effectiveGlobalTotal = venueTotal > 0 ? venueTotal : prizeData.max_winners
+      
+      // For fake gifts, we can still limit if max_winners > 0
+      let isEligible = true
+      if (effectiveGlobalTotal > 0) {
+        // Count all participants who got this fake gift
+        let countQuery = supabase
+          .from("participants")
+          .select("*", { count: "exact", head: true })
+          .eq("campaign_id", participantRow.campaign_id)
+          .eq("prize_id", selectedPrizeId)
+          
+        if (replayStartedAt) {
+          countQuery = countQuery.gte("created_at", replayStartedAt)
+        }
+        
+        const { count } = await countQuery
+        if (count !== null && count >= effectiveGlobalTotal) {
+          isEligible = false
+        }
+      }
+      
+      if (!isEligible) {
+        return { success: false, error: "Stock épuisé pour ce cadeau." }
+      }
+      
       const { error: updateParticipantError } = await supabase
         .from("participants")
         .update({ won: false, prize_id: selectedPrizeId })
@@ -270,5 +299,21 @@ export async function getSpinData(participantId: string) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return { success: false as const, error: message }
+  }
+}
+
+export async function markSpinAsLostNoStock(participantId: string, lockPrizeId: string | null) {
+  try {
+    const supabase = createServiceClient()
+    const { error: updateParticipantError } = await supabase
+      .from("participants")
+      .update({ won: false, prize_id: lockPrizeId })
+      .eq("id", participantId)
+      .eq("won", false)
+    if (updateParticipantError) throw updateParticipantError
+    return { success: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return { success: false, error: message }
   }
 }
